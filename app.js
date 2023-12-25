@@ -50,6 +50,9 @@ child.stdout.on('data', function (data) {
 
 child.stderr.on('data', function (data) {
   console.log('stderr: ' + data);
+  if(data.includes('INFO wallet_controller::sync: Wallet syncing done to height')){
+    currentHash = data.toString().trim().split('INFO wallet_controller::sync: Wallet syncing done to height ')[1];  
+  }
 });
 
 const hostname = '0.0.0.0';
@@ -66,7 +69,7 @@ const server = http.createServer((req, res) => {
   if (req.url === '/balance' && req.method === 'GET') {
     const displayBalance = function (data) {
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      const result = { balance: data.toString().trim(), tip: currentHash, lastBlockDate };
+      const result = { balance: data.toString().trim(), tip: currentHash };
       res.end(JSON.stringify(result));
       child.stdout.removeListener('data', displayBalance);
       return;
