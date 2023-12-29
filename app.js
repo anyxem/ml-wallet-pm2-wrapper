@@ -2,6 +2,7 @@ const http = require('http');
 var cp = require('child_process');
 const crypto = require('crypto');
 const { Buffer } = require('buffer');
+const fs = require('node:fs');
 
 function decrypt(text) {
   let iv = Buffer.from(text.split(':')[0], 'hex');
@@ -17,8 +18,14 @@ function decrypt(text) {
   return decrypted.toString();
 }
 
-const wallet = '/home/admin/mintlayer/wallet-cli';
-const child = cp.spawn(wallet, ['testnet', '--wallet-file=/home/admin/mintlayer/wallet/wallet_pi1']);
+const PATH_WALLET_CLI = process.env.PATH_WALLET_CLI || '';
+const PATH_WALLET = process.env.PATH_WALLET || '';
+const NETWORK = process.env.NETWORK || 'testnet';
+
+const wallet = PATH_WALLET_CLI;
+const child = cp.spawn(wallet, [NETWORK, '--wallet-file=' + PATH_WALLET]);
+
+child.stdin.write('startstaking\n');
 
 let currentHash = '';
 let lastHashBeforeSent = '';
@@ -78,6 +85,19 @@ const server = http.createServer((req, res) => {
     child.stdin.write('getbalance\n');
     return;
   }
+
+  if (req.url === '/logs' && req.method === 'GET') {
+    const logs_file = '/home/admin/.pm2/logs/app-out.log';	  
+    fs.readFile(logs_file, 'utf8', (err, data) => {
+      if (err) {
+        console.error(err);
+        return;
+      }
+      res.end(data);    
+      return;    
+    });  
+    return;
+  }	
 
   res.writeHead(404, { 'Content-Type': 'text/plain' });
   res.end('404 Not Found');
