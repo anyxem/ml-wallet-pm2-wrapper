@@ -1,22 +1,6 @@
 const http = require('http');
 var cp = require('child_process');
-const crypto = require('crypto');
-const { Buffer } = require('buffer');
 const fs = require('node:fs');
-
-function decrypt(text) {
-  let iv = Buffer.from(text.split(':')[0], 'hex');
-  let encryptedText = Buffer.from(text.split(':')[1], 'hex');
-  let decipher = crypto.createDecipheriv(
-    'aes-256-cbc',
-    // eslint-disable-next-line no-undef
-    Buffer.from(process.env.CRYPTO_SECRET),
-    iv,
-  );
-  let decrypted = decipher.update(encryptedText);
-  decrypted = Buffer.concat([decrypted, decipher.final()]);
-  return decrypted.toString();
-}
 
 const PATH_WALLET_CLI = process.env.PATH_WALLET_CLI || '';
 const PATH_WALLET = process.env.PATH_WALLET || '';
