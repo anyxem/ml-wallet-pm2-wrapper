@@ -5,15 +5,21 @@ const fs = require('node:fs');
 const PATH_WALLET_CLI = process.env.PATH_WALLET_CLI || '';
 const PATH_WALLET = process.env.PATH_WALLET || '';
 const NETWORK = process.env.NETWORK || 'testnet';
+const CHAT_ID = process.env.CHAT_ID || '';
+const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN || '';
 
 const wallet = PATH_WALLET_CLI;
 const child = cp.spawn(wallet, [NETWORK, '--wallet-file=' + PATH_WALLET]);
 
 child.stdin.write('startstaking\n');
 
+let lastKnownBlocksFound = 0;
+
 let currentHash = '';
 let lastHashBeforeSent = '';
 let lastBlockDate = '';
+
+const LOGFILE = '/home/admin/.pm2/logs/app-out.log';
 
 // child.stdout.on('data', function (data) {
 //   console.log('stdout: ' + data);
@@ -39,10 +45,33 @@ child.stdout.on('data', function (data) {
   }
 });
 
-child.stderr.on('data', function (data) {
+child.stderr.on('data', async function (data) {
   console.log('stderr: ' + data);
   if(data.includes('INFO wallet_controller::sync: Wallet syncing done to height')){
     currentHash = data.toString().trim().split('INFO wallet_controller::sync: Wallet syncing done to height ')[1];
+
+    const message = {chat_id: CHAT_ID, text: "Sync" + currentHash, disable_notification: false};
+    const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
+    await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(message)
+    });
+  }
+
+  if(data.includes('New block generated successfully')){
+    //
+    const message = {chat_id: CHAT_ID, text: "New Block Found", disable_notification: false};
+    const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
+    await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(message)
+    });
   }
 });
 
@@ -84,7 +113,7 @@ const server = http.createServer((req, res) => {
   }
 
   if (req.url === '/logs' && req.method === 'GET') {
-    const logs_file = '/home/admin/.pm2/logs/app-out.log';
+    const logs_file = LOGFILE;
     fs.readFile(logs_file, 'utf8', (err, data) => {
       if (err) {
         console.error(err);
