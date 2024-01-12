@@ -49,29 +49,25 @@ child.stderr.on('data', async function (data) {
   console.log('stderr: ' + data);
   if(data.includes('INFO wallet_controller::sync: Wallet syncing done to height')){
     currentHash = data.toString().trim().split('INFO wallet_controller::sync: Wallet syncing done to height ')[1];
-
-    const message = {chat_id: CHAT_ID, text: "Sync" + currentHash, disable_notification: false};
-    const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
-    await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(message)
-    });
   }
 
-  if(data.includes('New block generated successfully')){
-    //
-    const message = {chat_id: CHAT_ID, text: "New Block Found", disable_notification: false};
-    const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
-    await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(message)
-    });
+  if(TELEGRAM_TOKEN && CHAT_ID && data.includes('New block generated successfully')){
+    const displayBalance = async function (data) {
+      const message = {chat_id: CHAT_ID, text: "New Block Found. " + data.toString().trim(), disable_notification: false};
+      const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
+      await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(message)
+      });
+
+      child.stdout.removeListener('data', displayBalance);
+      return;
+    }
+    child.stdout.on('data', displayBalance);
+    child.stdin.write('listpoolids\n');
   }
 });
 
