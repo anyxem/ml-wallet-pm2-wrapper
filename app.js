@@ -42,7 +42,7 @@ child.stdout.on('data', function (data) {
 child.stderr.on('data', function (data) {
   console.log('stderr: ' + data);
   if(data.includes('INFO wallet_controller::sync: Wallet syncing done to height')){
-    currentHash = data.toString().trim().split('INFO wallet_controller::sync: Wallet syncing done to height ')[1];  
+    currentHash = data.toString().trim().split('INFO wallet_controller::sync: Wallet syncing done to height ')[1];
   }
 });
 
@@ -70,18 +70,31 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (req.url === '/poolbalance' && req.method === 'GET') {
+    const displayBalance = function (data) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      const result = { pooldata: data.toString().trim(), tip: currentHash };
+      res.end(JSON.stringify(result));
+      child.stdout.removeListener('data', displayBalance);
+      return;
+    }
+    child.stdout.on('data', displayBalance);
+    child.stdin.write('listpoolids\n');
+    return;
+  }
+
   if (req.url === '/logs' && req.method === 'GET') {
-    const logs_file = '/home/admin/.pm2/logs/app-out.log';	  
+    const logs_file = '/home/admin/.pm2/logs/app-out.log';
     fs.readFile(logs_file, 'utf8', (err, data) => {
       if (err) {
         console.error(err);
         return;
       }
-      res.end(data);    
-      return;    
-    });  
+      res.end(data);
+      return;
+    });
     return;
-  }	
+  }
 
   res.writeHead(404, { 'Content-Type': 'text/plain' });
   res.end('404 Not Found');
