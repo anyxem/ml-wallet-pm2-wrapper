@@ -11,7 +11,7 @@ const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN || '';
 const wallet = PATH_WALLET_CLI;
 const child = cp.spawn(wallet, [NETWORK, '--wallet-file=' + PATH_WALLET]);
 
-child.stdin.write('startstaking\n');
+child.stdin.write('staking-start\n');
 
 let lastKnownBlocksFound = 0;
 
@@ -67,7 +67,7 @@ child.stderr.on('data', async function (data) {
       return;
     }
     child.stdout.on('data', displayBalance);
-    child.stdin.write('listpoolids\n');
+    child.stdin.write('staking-list-pool-ids\n');
   }
 });
 
@@ -91,7 +91,7 @@ const server = http.createServer((req, res) => {
       return;
     }
     child.stdout.on('data', displayBalance);
-    child.stdin.write('getbalance\n');
+    child.stdin.write('account-balance\n');
     return;
   }
 
@@ -104,7 +104,7 @@ const server = http.createServer((req, res) => {
       return;
     }
     child.stdout.on('data', displayBalance);
-    child.stdin.write('listpoolids\n');
+    child.stdin.write('staking-list-pool-ids\n');
     return;
   }
 
