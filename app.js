@@ -53,7 +53,8 @@ child.stderr.on('data', async function (data) {
 
   if(TELEGRAM_TOKEN && CHAT_ID && data.includes('New block generated successfully')){
     const displayBalance = async function (data) {
-      const message = {chat_id: CHAT_ID, text: "New Block Found. " + data.toString().trim(), disable_notification: false};
+      const balance_prep = data.toString().trim().split('Balance: ')[1].split(', Creation Block')[0];
+      const message = {chat_id: CHAT_ID, text: "Block Found. New Balance: " + balance_prep, disable_notification: false};
       const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
       await fetch(url, {
         method: 'POST',
@@ -67,7 +68,7 @@ child.stderr.on('data', async function (data) {
       return;
     }
     child.stdout.on('data', displayBalance);
-    child.stdin.write('staking-list-pool-ids\n');
+    child.stdin.write('staking-list-pools\n');
   }
 });
 
@@ -104,7 +105,7 @@ const server = http.createServer((req, res) => {
       return;
     }
     child.stdout.on('data', displayBalance);
-    child.stdin.write('staking-list-pool-ids\n');
+    child.stdin.write('staking-list-pools\n');
     return;
   }
 
